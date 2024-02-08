@@ -10,5 +10,5 @@ import org.springframework.boot.runApplication
 class BotApplication
 
 fun main(args: Array<String>) {
-	runApplication<BotApplication>(*args)
+    runApplication<BotApplication>(*args)
 }
