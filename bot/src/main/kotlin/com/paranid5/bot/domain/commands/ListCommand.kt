@@ -2,6 +2,7 @@ package com.paranid5.bot.domain.commands
 
 import com.paranid5.bot.domain.utils.chatId
 import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.Message
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
@@ -16,9 +17,9 @@ private fun linkListMessage(message: Message, links: List<String>): SendMessage 
             links.isEmpty() -> emptyLinkListMessageText()
             else -> nonEmptyLinkListMessageText(links)
         }
-    )
+    ).linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
 
-private fun emptyLinkListMessageText(): String =
+fun emptyLinkListMessageText(): String =
     "You are not tracking anything"
 
 private fun nonEmptyLinkListMessageText(links: List<String>): String =

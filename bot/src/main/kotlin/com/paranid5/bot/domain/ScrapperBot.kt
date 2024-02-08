@@ -63,7 +63,7 @@ class ScrapperBot(
                 "/start" -> onStartCommand(bot, message, userDataSource)
                 "/help" -> onHelpCommand(bot, message, userDataSource)
                 "/track" -> onTrackCommand(bot, message, userDataSource)
-                "/untrack" -> onUntrackCommand(bot, message, userDataSource)
+                "/untrack" -> onUntrackCommand(bot, message, userLinks, userDataSource)
                 "/list" -> onListCommand(bot, message, userLinks, userDataSource)
                 else -> onText(bot, message, userState, userLinks, userDataSource)
             }
@@ -124,11 +124,12 @@ private suspend inline fun onTrackLinkCommand(
     links: List<String>,
     userDataSource: UserDataSource
 ) = coroutineScope {
-    val (_, link) = withContext(Dispatchers.IO) {
-        onTrackLinkCommand(bot, message)
+    val (_, url) = withContext(Dispatchers.IO) {
+        onTrackLinkCommand(bot, message, links)
     }
 
     val user = message.botUser
+    val link = url ?: return@coroutineScope
 
     launch(Dispatchers.IO) {
         userDataSource.patchUserState(
@@ -144,10 +145,11 @@ private suspend inline fun onTrackLinkCommand(
 private suspend inline fun onUntrackCommand(
     bot: TelegramBot,
     message: Message,
+    links: List<String>,
     userDataSource: UserDataSource
 ) = coroutineScope {
     launch(Dispatchers.IO) {
-        onUntrackCommand(bot, message)
+        onUntrackCommand(bot, message, links)
     }
 
     launch(Dispatchers.IO) {
@@ -163,11 +165,12 @@ private suspend inline fun onUntrackLinkCommand(
     links: List<String>,
     userDataSource: UserDataSource
 ) = coroutineScope {
-    val (_, link) = withContext(Dispatchers.IO) {
-        onUntrackLinkCommand(bot, message)
+    val (_, url) = withContext(Dispatchers.IO) {
+        onUntrackLinkCommand(bot, message, links)
     }
 
     val user = message.botUser
+    val link = url ?: return@coroutineScope
 
     launch(Dispatchers.IO) {
         userDataSource.patchUserState(
@@ -203,14 +206,16 @@ private suspend inline fun onText(
     userState: UserState?,
     links: List<String>,
     userDataSource: UserDataSource
-) = when (userState) {
-    is UserState.TrackSentState ->
-        onTrackLinkCommand(bot, message, links, userDataSource)
+) {
+    when (userState) {
+        is UserState.TrackSentState ->
+            onTrackLinkCommand(bot, message, links, userDataSource)
 
-    is UserState.UntrackSentState ->
-        onUntrackLinkCommand(bot, message, links, userDataSource)
+        is UserState.UntrackSentState ->
+            onUntrackLinkCommand(bot, message, links, userDataSource)
 
-    else -> coroutineScope {
-        launch(Dispatchers.IO) { onUnknownCommand(bot, message) }
+        else -> coroutineScope {
+            launch(Dispatchers.IO) { onUnknownCommand(bot, message) }
+        }
     }
 }
