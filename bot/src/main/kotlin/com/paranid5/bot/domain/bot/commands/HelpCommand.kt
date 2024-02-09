@@ -1,4 +1,4 @@
-package com.paranid5.bot.domain.commands
+package com.paranid5.bot.domain.bot.commands
 
 import com.paranid5.bot.domain.utils.chatId
 import com.pengrad.telegrambot.TelegramBot
