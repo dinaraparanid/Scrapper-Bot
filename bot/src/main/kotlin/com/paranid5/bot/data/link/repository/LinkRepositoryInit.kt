@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component
 class LinkRepositoryInit @Autowired constructor(
     @Qualifier("link_rep_memory")
     private val repository: LinkRepository,
+    @Qualifier("impl")
     private val linkResponseChannel: LinkResponseChannel
 ) {
     @EventListener(ContextRefreshedEvent::class)

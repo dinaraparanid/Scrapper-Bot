@@ -1,6 +1,5 @@
-package com.paranid5.bot.domain.bot
+package com.paranid5.bot.domain.bot.interactor
 
-import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.domain.bot.commands.*
 import com.paranid5.bot.domain.bot.user_state_patch.*
 import com.paranid5.bot.domain.user.UserState
@@ -10,43 +9,42 @@ import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 import org.springframework.stereotype.Component
 
-@Component
-class BotInteractor(
-    linkRepository: LinkRepository,
+@Component("interactor_mock")
+class BotInteractorMock(
     helpStatePatch: HelpStatePatch,
     listStatePatch: ListStatePatch,
     startStatePatch: StartStatePatch,
-    trackLinkStatePatch: TrackLinkStatePatch,
     trackStatePatch: TrackStatePatch,
     untrackStatePatch: UntrackStatePatch,
+    trackLinkStatePatch: TrackLinkStatePatch,
     untrackLinkStatePatch: UntrackLinkStatePatch
-) {
+) : BotInteractor {
     private val stateLessHandlers by lazy {
         listOf(
-            HelpCommand() to helpStatePatch,
-            ListCommand() to listStatePatch,
-            StartCommand() to startStatePatch,
-            TrackCommand() to trackStatePatch,
-            UntrackCommand() to untrackStatePatch,
+            MockCommand("/help") to helpStatePatch,
+            MockCommand("/list") to listStatePatch,
+            MockCommand("/start") to startStatePatch,
+            MockCommand("/track") to trackStatePatch,
+            MockCommand("/untrack") to untrackStatePatch,
         )
     }
 
     private val stateFullHandlers by lazy {
         mapOf(
-            UserState.TrackSentState::class.simpleName!! to (TrackLinkCommand(linkRepository) to trackLinkStatePatch),
-            UserState.UntrackSentState::class.simpleName!! to (UntrackLinkCommand(linkRepository) to untrackLinkStatePatch)
+            "link" to (MockResultCommand() to trackLinkStatePatch),
+            "unlink" to (MockResultCommand() to untrackLinkStatePatch)
         )
     }
 
     private val unknownCommand by lazy {
-        UnknownCommand()
+        MockCommand(null)
     }
 
-    suspend fun handleCommandAndPatchUserState(
+    override suspend fun handleCommandAndPatchUserState(
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-        userState: UserState?
+        userState: UserState
     ) {
         val command = findCommand(message.textOrEmpty)
         handleCommandAndPatchUserStateImpl(command, bot, message, userLinks, userState)
@@ -62,24 +60,25 @@ class BotInteractor(
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-        userState: UserState?
+        userState: UserState
     ): Unit = when (command) {
         null -> handleStateFullCommands(bot, message, userLinks, userState)
-        else -> handleStateLessCommands(command, bot, message, userLinks, userState)
+        else -> handleStateLessCommands(command, bot, message, userLinks)
     }
 
     private suspend inline fun handleStateFullCommands(
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-        userState: UserState?
+        userState: UserState
     ) {
         when (userState) {
-            null -> unknownCommand.onCommand(bot, message, userLinks, null)
+            is UserState.NoneState ->
+                unknownCommand.onCommand(bot, message, userLinks)
 
             else -> {
                 val (cmd, patcher) = stateFullHandlers[userState::class.simpleName]!!
-                cmd.onCommand(bot, message, userLinks, userState)?.let {
+                cmd.onCommand(bot, message, userLinks)?.let {
                     patcher.patchUserState(message.botUser)
                 }
             }
@@ -90,15 +89,14 @@ class BotInteractor(
         command: String?,
         bot: TelegramBot,
         message: Message,
-        userLinks: List<String>,
-        userState: UserState?
+        userLinks: List<String>
     ) {
         when (val handler = stateLessHandlers.find { (cmd, _) -> cmd.text == command }) {
-            null -> unknownCommand.onCommand(bot, message, userLinks, null)
+            null -> unknownCommand.onCommand(bot, message, userLinks)
 
             else -> {
                 val (cmd, patcher) = handler
-                cmd.onCommand(bot, message, userLinks, userState)
+                cmd.onCommand(bot, message, userLinks)
                 patcher.patchUserState(message.botUser)
             }
         }

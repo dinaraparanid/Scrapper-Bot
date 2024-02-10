@@ -1,7 +1,6 @@
 package com.paranid5.bot.domain.bot.commands
 
 import com.paranid5.bot.domain.bot.messages.registeredMessage
-import com.paranid5.bot.domain.user.UserState
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 import com.pengrad.telegrambot.response.SendResponse
@@ -14,7 +13,6 @@ data class StartCommand(override val text: String? = "/start") : BotCommand<Send
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-        userState: UserState?
     ): SendResponse = sendStartMessage(bot, message).await()
 }
 

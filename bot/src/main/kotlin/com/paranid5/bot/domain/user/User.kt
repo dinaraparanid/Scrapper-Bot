@@ -5,7 +5,7 @@ import com.pengrad.telegrambot.model.Message
 
 data class User(
     val id: Long,
-    val charId: Long,
+    val chatId: Long,
     val firstName: String,
     val secondName: String
 )
@@ -13,7 +13,7 @@ data class User(
 inline val Message.botUser: User
     get() = User(
         id = from().id(),
-        charId = chatId,
+        chatId = chatId,
         firstName = from().firstName(),
         secondName = from().lastName()
     )

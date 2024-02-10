@@ -2,7 +2,6 @@ package com.paranid5.bot.domain.bot.commands
 
 import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.domain.links.parseLink
-import com.paranid5.bot.domain.user.UserState
 import com.paranid5.bot.domain.utils.textOrEmpty
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
@@ -18,7 +17,6 @@ data class TrackLinkCommand(
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-        userState: UserState?
     ): Unit? = parseAndTrackLink(message, linkRepository).await()
 }
 

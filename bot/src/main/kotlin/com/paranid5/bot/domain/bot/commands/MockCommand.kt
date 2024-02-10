@@ -3,12 +3,10 @@ package com.paranid5.bot.domain.bot.commands
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 
-sealed interface BotCommand<T> {
-    val text: String?
-
-    suspend fun onCommand(
+data class MockCommand(override val text: String?) : BotCommand<Unit> {
+    override suspend fun onCommand(
         bot: TelegramBot,
         message: Message,
-        userLinks: List<String>,
-    ): T
+        userLinks: List<String>
+    ): Unit = Unit
 }

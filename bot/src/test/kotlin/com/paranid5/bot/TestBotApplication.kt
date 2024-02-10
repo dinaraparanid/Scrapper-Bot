@@ -10,15 +10,15 @@ import org.testcontainers.utility.DockerImageName
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestBotApplication {
-
-	@Bean
-	@ServiceConnection
-	fun kafkaContainer(): KafkaContainer {
-		return KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
-	}
+    @Bean
+    @ServiceConnection
+    fun kafkaContainer(): KafkaContainer =
+        KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
 
 }
 
 fun main(args: Array<String>) {
-	fromApplication<BotApplication>().with(TestBotApplication::class).run(*args)
+    fromApplication<BotApplication>()
+        .with(TestBotApplication::class)
+        .run(*args)
 }
