@@ -3,6 +3,7 @@ package com.paranid5.bot.domain.user
 sealed interface UserState {
     val user: User
 
+    data class NoneState(override val user: User) : UserState
     data class StartSentState(override val user: User) : UserState
     data class HelpSentState(override val user: User) : UserState
     data class TrackSentState(override val user: User) : UserState

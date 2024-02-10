@@ -1,25 +1,31 @@
 package com.paranid5.bot.domain.bot.commands
 
-import com.paranid5.bot.domain.utils.chatId
+import com.paranid5.bot.domain.bot.messages.provideTrackLinkMessage
+import com.paranid5.bot.domain.user.UserState
 import com.pengrad.telegrambot.TelegramBot
-import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.Message
-import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
-fun onTrackCommand(bot: TelegramBot, message: Message): SendResponse =
+data class TrackCommand(override val text: String? = "/track") : BotCommand<SendResponse> {
+    override suspend fun onCommand(
+        bot: TelegramBot,
+        message: Message,
+        userLinks: List<String>,
+        userState: UserState?
+    ): SendResponse = sendTrackMessage(bot, message).await()
+}
+
+private suspend inline fun sendTrackMessage(
+    bot: TelegramBot,
+    message: Message,
+) = coroutineScope {
+    async(Dispatchers.IO) {
+        sendTrackMessageImpl(bot, message)
+    }
+}
+
+private fun sendTrackMessageImpl(bot: TelegramBot, message: Message): SendResponse =
     bot.execute(provideTrackLinkMessage(message))
-
-private fun provideTrackLinkMessage(message: Message): SendMessage =
-    SendMessage(message.chatId, provideTrackLinkMessageText())
-        .linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
-
-private fun provideTrackLinkMessageText(): String =
-    """
-        Provide the link to track in URL format:
-        https://some_link
-
-        Supported sites:
-        1. https://github.com
-        2. https://stackoverflow.com
-    """.trimIndent()

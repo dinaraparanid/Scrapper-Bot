@@ -1,27 +1,35 @@
 package com.paranid5.bot.domain.bot.commands
 
-import com.paranid5.bot.domain.utils.chatId
+import com.paranid5.bot.domain.bot.messages.provideUntrackLinkMessage
+import com.paranid5.bot.domain.user.UserState
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
-import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup
-import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
-fun onUntrackCommand(bot: TelegramBot, message: Message, links: List<String>): SendResponse =
-    bot.execute(provideUntrackLinkMessage(message, links))
+data class UntrackCommand(override val text: String? = "/untrack") : BotCommand<SendResponse> {
+    override suspend fun onCommand(
+        bot: TelegramBot,
+        message: Message,
+        userLinks: List<String>,
+        userState: UserState?
+    ): SendResponse = sendUntrackLinkMessage(bot, message, userLinks).await()
+}
 
-private fun provideUntrackLinkMessage(message: Message, links: List<String>): SendMessage =
-    when {
-        links.isEmpty() -> SendMessage(message.chatId, emptyLinkListMessageText())
-
-        else -> SendMessage(message.chatId, provideUntrackLinkMessageText())
-            .replyMarkup(linksKeyboard(links))
+private suspend inline fun sendUntrackLinkMessage(
+    bot: TelegramBot,
+    message: Message,
+    links: List<String>
+) = coroutineScope {
+    async(Dispatchers.IO) {
+        sendUntrackLinkMessageImpl(bot, message, links)
     }
+}
 
-private fun provideUntrackLinkMessageText(): String =
-    "Select the link to untrack"
-
-private fun linksKeyboard(links: List<String>): ReplyKeyboardMarkup =
-    ReplyKeyboardMarkup(*links.map { arrayOf(it) }.toTypedArray())
-        .resizeKeyboard(true)
-        .oneTimeKeyboard(true)
+private fun sendUntrackLinkMessageImpl(
+    bot: TelegramBot,
+    message: Message,
+    links: List<String>
+): SendResponse = bot.execute(provideUntrackLinkMessage(message, links))

@@ -1,28 +1,32 @@
 package com.paranid5.bot.domain.bot.commands
 
-import com.paranid5.bot.domain.utils.chatId
+import com.paranid5.bot.domain.bot.messages.linkListMessage
+import com.paranid5.bot.domain.user.UserState
 import com.pengrad.telegrambot.TelegramBot
-import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.Message
-import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
-fun onListCommand(bot: TelegramBot, message: Message, links: List<String>): SendResponse =
+data class ListCommand(override val text: String? = "/list") : BotCommand<SendResponse> {
+    override suspend fun onCommand(
+        bot: TelegramBot,
+        message: Message,
+        userLinks: List<String>,
+        userState: UserState?
+    ): SendResponse = sendListMessage(bot, message, userLinks).await()
+}
+
+private suspend inline fun sendListMessage(
+    bot: TelegramBot,
+    message: Message,
+    links: List<String>,
+) = coroutineScope {
+    async(Dispatchers.IO) {
+        sendListMessageImpl(bot, message, links)
+    }
+}
+
+private fun sendListMessageImpl(bot: TelegramBot, message: Message, links: List<String>): SendResponse =
     bot.execute(linkListMessage(message, links))
-
-private fun linkListMessage(message: Message, links: List<String>): SendMessage =
-    SendMessage(
-        message.chatId,
-        when {
-            links.isEmpty() -> emptyLinkListMessageText()
-            else -> nonEmptyLinkListMessageText(links)
-        }
-    ).linkPreviewOptions(LinkPreviewOptions().isDisabled(true))
-
-fun emptyLinkListMessageText(): String =
-    "You are not tracking anything"
-
-private fun nonEmptyLinkListMessageText(links: List<String>): String =
-    links
-        .mapIndexed { i, link -> "${i + 1}. $link" }
-        .joinToString(separator = "\n")

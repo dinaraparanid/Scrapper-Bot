@@ -4,9 +4,8 @@ import com.paranid5.bot.configuration.AppConfig
 import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.data.link.response.LinkResponse
 import com.paranid5.bot.data.user.UserDataSource
-import com.paranid5.bot.domain.bot.use_cases.*
+import com.paranid5.bot.domain.bot.messages.*
 import com.paranid5.bot.domain.user.botUser
-import com.paranid5.bot.domain.utils.textOrEmpty
 import com.paranid5.bot.domain.utils.userId
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
@@ -26,7 +25,8 @@ class ScrapperBot(
     @Qualifier("user_src_memory")
     private val userDataSource: UserDataSource,
     @Qualifier("link_rep_memory")
-    private val linkRepository: LinkRepository
+    private val linkRepository: LinkRepository,
+    private val botInteractor: BotInteractor
 ) : CoroutineScope by CoroutineScope(Dispatchers.IO) {
     private val token = config.telegramToken
 
@@ -68,23 +68,16 @@ class ScrapperBot(
             val userId = message.userId
             val userState = states[userId]
             val userLinks = tracking[userId] ?: emptyList()
-            val text = message.textOrEmpty
 
             userDataSource.patchUser(message.botUser)
-
-            when (text) {
-                "/start" -> onStartCommand(bot, message, userDataSource)
-                "/help" -> onHelpCommand(bot, message, userDataSource)
-                "/track" -> onTrackCommand(bot, message, userDataSource)
-                "/untrack" -> onUntrackCommand(bot, message, userLinks, userDataSource)
-                "/list" -> onListCommand(bot, message, userLinks, userDataSource)
-                else -> onTextCommand(bot, message, userState, userDataSource, linkRepository)
-            }
+            botInteractor.handleCommandAndPatchUserState(bot, message, userLinks, userState)
         }
 
     private suspend fun launchResponseMonitoring(bot: TelegramBot): Unit =
         combine(linkResponseFlow, userDataSource.usersFlow) { response, users ->
             response to users
+        }.distinctUntilChanged { (oldResponse, _), (newResponse, _) ->
+            oldResponse == newResponse
         }.collect { (response, users) ->
             val chatId = users.find { it.id == response.userId }!!.charId
 

@@ -1,4 +1,4 @@
-package com.paranid5.bot.domain.bot.use_cases
+package com.paranid5.bot.domain.bot.messages
 
 import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.request.SendMessage
