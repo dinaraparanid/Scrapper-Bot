@@ -1,30 +1,43 @@
 package com.paranid5.bot.domain.bot.commands
 
 import com.paranid5.bot.data.link.repository.LinkRepository
+import com.paranid5.bot.domain.bot.messages.unsupportedLinkMessage
 import com.paranid5.bot.domain.links.parseLink
+import com.paranid5.bot.domain.utils.chatId
 import com.paranid5.bot.domain.utils.textOrEmpty
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 
 data class TrackLinkCommand(
     private val linkRepository: LinkRepository,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
     override val text: String? = null
-) : BotCommand<Unit?> {
+) : BotStatusCommand<Unit?> {
     override suspend fun onCommand(
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>,
-    ): Unit? = parseAndTrackLink(message, linkRepository).await()
+    ): Unit? = parseAndTrackLink(message, linkRepository, scope).await()
+
+    override suspend fun onFailure(bot: TelegramBot, message: Message): Unit = coroutineScope {
+        launch(scope.coroutineContext) {
+            bot.execute(
+                unsupportedLinkMessage(
+                    chatId = message.chatId,
+                    link = message.textOrEmpty
+                )
+            )
+        }
+    }
 }
 
 private suspend inline fun parseAndTrackLink(
     message: Message,
-    linkRepository: LinkRepository
+    linkRepository: LinkRepository,
+    scope: CoroutineScope
 ) = coroutineScope {
-    async(Dispatchers.IO) {
+    async(scope.coroutineContext) {
         parseAndTrackLinkImpl(message, linkRepository)
     }
 }

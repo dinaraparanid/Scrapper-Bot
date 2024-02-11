@@ -27,9 +27,7 @@ class DefaultLinkDataSourceInMemory(private val linkType: (String) -> LinkType) 
     }
 
     override suspend fun patchTrackings(userId: Long, links: List<String>): Unit =
-        _usersTrackingsFlow.update {
-            it + (userId to links)
-        }
+        _usersTrackingsFlow.update { it + (userId to links) }
 
     override suspend fun trackLink(userId: Long, link: String): Unit =
         storeLinksFlow.emit(UserWithLink(userId, link))

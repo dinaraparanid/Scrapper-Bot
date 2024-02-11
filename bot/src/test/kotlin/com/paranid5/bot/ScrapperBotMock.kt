@@ -5,19 +5,25 @@ import com.paranid5.bot.data.link.response.LinkResponse
 import com.paranid5.bot.data.user.UserDataSource
 import com.paranid5.bot.domain.bot.ScrapperBot
 import com.paranid5.bot.domain.bot.interactor.BotInteractor
-import com.paranid5.bot.domain.bot.messages.*
+import com.paranid5.bot.domain.user.User
 import com.paranid5.bot.domain.user.UserState
 import com.paranid5.bot.domain.user.botUser
+import com.paranid5.bot.domain.utils.textOrEmpty
 import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.model.Chat
 import com.pengrad.telegrambot.model.Message
+import com.pengrad.telegrambot.model.User as TgUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import java.io.Serial
+import kotlin.random.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScrapperBotMock(
@@ -25,21 +31,67 @@ class ScrapperBotMock(
     private val linkRepository: LinkRepository,
     private val botInteractor: BotInteractor,
     private val testScope: TestScope
-) : ScrapperBot,
-    CoroutineScope by CoroutineScope(UnconfinedTestDispatcher(testScope.testScheduler)) {
+) : ScrapperBot {
     private val messagesFlow by lazy {
         MutableSharedFlow<Message>()
     }
 
-    override val linkResponseFlow: MutableSharedFlow<LinkResponse> by lazy {
-        MutableSharedFlow()
+    private val _linkResponseFlow by lazy {
+        MutableSharedFlow<LinkResponse>()
+    }
+
+    val linkResponseFlow by lazy {
+        _linkResponseFlow.asSharedFlow()
     }
 
     override fun launchBot() {
-        val bot = TelegramBot("")
-        launch { launchBotEventLoop(bot) }
-        launch { launchResponseMonitoring(bot) }
+        testScope.backgroundScope.launch(UnconfinedTestDispatcher(testScope.testScheduler)) {
+            launchBotEventLoop(TelegramBot(""))
+        }
     }
+
+    override suspend fun acquireResponse(response: LinkResponse): Unit =
+        _linkResponseFlow.emit(response)
+
+    suspend fun sendStartMessage(user: User): Unit = sendMessage(user, "/start")
+    suspend fun sendHelpMessage(user: User): Unit = sendMessage(user, "/help")
+    suspend fun sendTrackMessage(user: User): Unit = sendMessage(user, "/track")
+    suspend fun sendUntrackMessage(user: User): Unit = sendMessage(user, "/untrack")
+    suspend fun sendListMessage(user: User): Unit = sendMessage(user, "/list")
+    suspend fun sendTextMessage(user: User, text: String): Unit = sendMessage(user, text)
+
+    private suspend fun sendMessage(
+        user: User,
+        message: String,
+        messageId: Int = Random.nextInt()
+    ) = messagesFlow.emit(
+        object : Message() {
+            @Serial
+            private val serialVersionUID: Long = -5235462941514739848L
+
+            override fun messageId(): Int = messageId
+
+            override fun text(): String = message
+
+            override fun from(): TgUser = object : TgUser(user.id) {
+                @Serial
+                private val serialVersionUID: Long = 2544479605889672743L
+
+                override fun firstName(): String =
+                    user.firstName
+
+                override fun lastName(): String =
+                    user.secondName
+            }
+
+            override fun chat(): Chat = object : Chat() {
+                @Serial
+                private val serialVersionUID: Long = -4449400557775734231L
+
+                override fun id(): Long = user.chatId
+            }
+        }
+    )
 
     private suspend fun launchBotEventLoop(bot: TelegramBot): Unit =
         combine(
@@ -49,32 +101,13 @@ class ScrapperBotMock(
         ) { states, tracking, message ->
             Triple(states, tracking, message)
         }.distinctUntilChanged { (_, _, oldMsg), (_, _, newMsg) ->
-            oldMsg == newMsg
+            oldMsg.messageId() == newMsg.messageId()
         }.collect { (states, tracking, message) ->
             val user = message.botUser
             val userState = states[user.id] ?: UserState.NoneState(user)
             val userLinks = tracking[user.id] ?: emptyList()
 
-            userDataSource.patchUser(message.botUser)
+            userDataSource.patchUser(user)
             botInteractor.handleCommandAndPatchUserState(bot, message, userLinks, userState)
-        }
-
-    private suspend fun launchResponseMonitoring(bot: TelegramBot): Unit =
-        combine(linkResponseFlow, userDataSource.usersFlow) { response, users ->
-            response to users
-        }.distinctUntilChanged { (oldResponse, _), (newResponse, _) ->
-            oldResponse == newResponse
-        }.collect { (response, users) ->
-            val chatId = users.find { it.id == response.userId }!!.chatId
-
-            bot.execute(
-                when (response) {
-                    is LinkResponse.Invalid -> unsupportedLinkMessage(chatId, response.link)
-                    is LinkResponse.TrackResponse.New -> startTrackingMessage(chatId, response.link)
-                    is LinkResponse.UntrackResponse.New -> linkNotTrackedMessage(chatId, response.link)
-                    is LinkResponse.TrackResponse.Present -> alreadyTrackingMessage(chatId, response.link)
-                    is LinkResponse.UntrackResponse.Present -> stopTrackingMessage(chatId, response.link)
-                }
-            )
         }
 }

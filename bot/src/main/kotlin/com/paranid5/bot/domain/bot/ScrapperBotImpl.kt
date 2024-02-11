@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
-@Component("bot_impl")
+@Component
 class ScrapperBotImpl(
     config: AppConfig,
     @Qualifier("user_src_memory")
@@ -37,8 +37,8 @@ class ScrapperBotImpl(
         MutableSharedFlow<Message>()
     }
 
-    override val linkResponseFlow: MutableSharedFlow<LinkResponse> by lazy {
-        MutableSharedFlow()
+    private val linkResponseFlow by lazy {
+        MutableSharedFlow<LinkResponse>()
     }
 
     override fun launchBot() {
@@ -57,6 +57,9 @@ class ScrapperBotImpl(
         launch(Dispatchers.IO) { launchBotEventLoop(bot) }
         launch(Dispatchers.IO) { launchResponseMonitoring(bot) }
     }
+
+    override suspend fun acquireResponse(response: LinkResponse): Unit =
+        linkResponseFlow.emit(response)
 
     private suspend fun launchBotEventLoop(bot: TelegramBot): Unit =
         combine(

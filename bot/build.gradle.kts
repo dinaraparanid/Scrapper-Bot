@@ -35,6 +35,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.github.pengrad:java-telegram-bot-api:7.0.1")
+    implementation("com.paywholesail:assisted-inject:0.9.4")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

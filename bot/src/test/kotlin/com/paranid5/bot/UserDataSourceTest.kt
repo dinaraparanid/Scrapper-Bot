@@ -1,25 +1,34 @@
 package com.paranid5.bot
 
 import com.paranid5.bot.data.user.UserDataSourceInMemory
+import com.paranid5.bot.data.user.UserDataSourceMock
 import com.paranid5.bot.domain.user.User
 import com.paranid5.bot.domain.user.UserState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+
+private val vasyan = User(id = 0, chatId = 0, firstName = "Васян", secondName = "Петросян")
+private val tolik = User(id = 1, chatId = 1, firstName = "Толик", secondName = "Алкоголик")
+private val danila = User(id = 2, chatId = 2, firstName = "Данила", secondName = "Из Нижнего Тагила")
 
 @SpringBootTest
 class UserDataSourceTest {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun userSrcTest() = runTest {
-        val usersTest = mutableListOf<Collection<User>>()
-        val statesTest = mutableListOf<Map<Long, UserState>>()
-        val userSrc = UserDataSourceInMemory()
+    @Autowired
+    private lateinit var userSrc: UserDataSourceMock
 
+    private val usersTest = mutableListOf<Collection<User>>()
+    private val statesTest = mutableListOf<Map<Long, UserState>>()
+
+    context(TestScope)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun launchCollectors() {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             userSrc.usersFlow.toList(usersTest)
         }
@@ -27,15 +36,19 @@ class UserDataSourceTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             userSrc.userStatesFlow.toList(statesTest)
         }
+    }
 
-        fun assertVals(requiredUsers: Collection<User>, requiredStates: Map<Long, UserState>) {
-            assert(requiredUsers matches usersTest.last())
-            assert(requiredStates matches statesTest.last())
-        }
+    private fun assertVals(
+        requiredUsers: Collection<User>,
+        requiredStates: Map<Long, UserState>
+    ) {
+        assert(requiredUsers matches usersTest.last())
+        assert(requiredStates matches statesTest.last())
+    }
 
-        val vasyan = User(id = 0, chatId = 0, firstName = "Васян", secondName = "Петросян")
-        val tolik = User(id = 1, chatId = 1, firstName = "Толик", secondName = "Алкоголик")
-        val danila = User(id = 2, chatId = 2, firstName = "Данила", secondName = "Из Нижнего Тагила")
+    @Test
+    fun userSrcTest() = runTest {
+        launchCollectors()
 
         userSrc.patchUser(vasyan)
         assertVals(

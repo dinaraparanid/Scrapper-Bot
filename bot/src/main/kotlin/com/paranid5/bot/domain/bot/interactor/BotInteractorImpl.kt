@@ -76,15 +76,15 @@ class BotInteractorImpl(
         userLinks: List<String>,
         userState: UserState
     ) {
-        when (userState) {
-            is UserState.NoneState ->
-                unknownCommand.onCommand(bot, message, userLinks)
+        when (val handler = stateFullHandlers[userState::class.simpleName]) {
+            null -> unknownCommand.onCommand(bot, message, userLinks)
 
             else -> {
-                val (cmd, patcher) = stateFullHandlers[userState::class.simpleName]!!
-                cmd.onCommand(bot, message, userLinks)?.let {
-                    patcher.patchUserState(message.botUser)
-                }
+                val (statusCommand, patcher) = handler
+                statusCommand
+                    .onCommand(bot, message, userLinks)
+                    ?.let { patcher.patchUserState(message.botUser) }
+                    ?: statusCommand.onFailure(bot, message)
             }
         }
     }

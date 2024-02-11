@@ -1,34 +1,59 @@
 package com.paranid5.bot
 
 import com.paranid5.bot.data.link.repository.LinkRepositoryInMemory
-import com.paranid5.bot.data.link.response.LinkResponseChannelMock
-import com.paranid5.bot.data.link.sources.github.GitHubDataSourceInMemory
-import com.paranid5.bot.data.link.sources.stack_overflow.StackOverflowDataSourceInMemory
+import com.paranid5.bot.data.link.sources.github.GitHubDataSourceMock
+import com.paranid5.bot.data.link.sources.stack_overflow.StackOverflowDataSourceMock
 import com.paranid5.bot.domain.utils.extend
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 typealias LinkMap = Map<Long, List<String>>
 
+private const val vasyanId = 0L
+private const val tolikId = 1L
+private const val danilaId = 2L
+
+private const val ghLink1 = "https://github.com/dinaraparanid/Crescendo"
+private const val ghLink2 = "https://github.com/dinaraparanid"
+private const val ghLink3 = "https://github.com/dinaraparanid/Scrapper-Bot"
+
+private const val soLink1 = "https://stackoverflow.com/questions/39866676/retrofit-uploading-multiple-images-to-a-single-key"
+private const val soLink2 = "https://stackoverflow.com/questions/32580257/tablayout-set-spacing-or-margin-each-tab"
+private const val soLink3 = "https://stackoverflow.com/questions/40202294/set-selected-item-in-android-bottomnavigationview"
+
 @SpringBootTest
 class LinkRepTest {
+    @Autowired
+    private lateinit var githubSrc: GitHubDataSourceMock
+
+    @Autowired
+    private lateinit var stackSrc: StackOverflowDataSourceMock
+
+    @Autowired
+    private lateinit var linkResponseChannel: LinkResponseChannelMock
+
+    private val linkRep by lazy {
+        LinkRepositoryInMemory(githubSrc, stackSrc)
+    }
+
+    private val githubTest = mutableListOf<LinkMap>()
+    private val stackTest = mutableListOf<LinkMap>()
+    private val repTest = mutableListOf<LinkMap>()
+
+    private var ghMap = emptyMap<Long, List<String>>()
+    private var soMap = emptyMap<Long, List<String>>()
+    private var repMap = emptyMap<Long, List<String>>()
+
+    context(TestScope)
     @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun linkRepTest() = runTest {
-        val githubSrc = GitHubDataSourceInMemory()
-        val stackSrc = StackOverflowDataSourceInMemory()
-        val linkRep = LinkRepositoryInMemory(githubSrc, stackSrc)
-        val linkResponseChannel = LinkResponseChannelMock()
-
-        val githubTest = mutableListOf<LinkMap>()
-        val stackTest = mutableListOf<LinkMap>()
-        val repTest = mutableListOf<LinkMap>()
-
+    private fun launchCollectors() {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             githubSrc.usersTrackingsFlow.toList(githubTest)
         }
@@ -56,30 +81,19 @@ class LinkRepTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             stackSrc.launchLinksRemoveMonitoring(linkResponseChannel)
         }
+    }
 
-        val vasyanId = 0L
-        val tolikId = 1L
-        val danilaId = 2L
+    private fun assertVals() {
+        assert(ghMap matches githubTest.last())
+        assert(soMap matches stackTest.last())
+        assert(repMap matches repTest.last())
+    }
 
-        val ghLink1 = "https://github.com/dinaraparanid/Crescendo"
-        val ghLink2 = "https://github.com/dinaraparanid"
-        val ghLink3 = "https://github.com/dinaraparanid/Scrapper-Bot"
+    @Test
+    fun linkRepTest() = runTest {
+        launchCollectors()
 
-        val soLink1 = "https://stackoverflow.com/questions/39866676/retrofit-uploading-multiple-images-to-a-single-key"
-        val soLink2 = "https://stackoverflow.com/questions/32580257/tablayout-set-spacing-or-margin-each-tab"
-        val soLink3 = "https://stackoverflow.com/questions/40202294/set-selected-item-in-android-bottomnavigationview"
-
-        var ghMap = emptyMap<Long, List<String>>()
-        var soMap = emptyMap<Long, List<String>>()
-        var repMap = emptyMap<Long, List<String>>()
-
-        fun assertVals() {
-            assert(ghMap matches githubTest.last())
-            assert(soMap matches stackTest.last())
-            assert(repMap matches repTest.last())
-        }
-
-        // ----------- Tracking -----------
+        // ------------- Track -------------
 
         githubSrc.trackLink(vasyanId, ghLink1)
         ghMap = mapOf(vasyanId to listOf(ghLink1))
@@ -94,7 +108,6 @@ class LinkRepTest {
         githubSrc.trackLink(danilaId, ghLink1)
         githubSrc.trackLink(danilaId, ghLink2)
         githubSrc.trackLink(danilaId, ghLink3)
-
         ghMap = mapOf(
             vasyanId to listOf(ghLink1),
             tolikId to listOf(ghLink2),
@@ -124,7 +137,7 @@ class LinkRepTest {
         repMap = ghMap extend soMap
         assertVals()
 
-        // ----------- Untracking -----------
+        // ------------- Untrack -------------
 
         githubSrc.untrackLink(vasyanId, ghLink1)
 

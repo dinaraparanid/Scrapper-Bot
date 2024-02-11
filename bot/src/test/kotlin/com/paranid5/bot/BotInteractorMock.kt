@@ -1,23 +1,26 @@
-package com.paranid5.bot.domain.bot.interactor
+package com.paranid5.bot
 
+import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.domain.bot.commands.*
+import com.paranid5.bot.domain.bot.interactor.BotInteractor
 import com.paranid5.bot.domain.bot.user_state_patch.*
 import com.paranid5.bot.domain.user.UserState
 import com.paranid5.bot.domain.user.botUser
 import com.paranid5.bot.domain.utils.textOrEmpty
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
-import org.springframework.stereotype.Component
+import kotlinx.coroutines.test.TestScope
 
-@Component("interactor_mock")
 class BotInteractorMock(
-    helpStatePatch: HelpStatePatch,
-    listStatePatch: ListStatePatch,
-    startStatePatch: StartStatePatch,
-    trackStatePatch: TrackStatePatch,
-    untrackStatePatch: UntrackStatePatch,
-    trackLinkStatePatch: TrackLinkStatePatch,
-    untrackLinkStatePatch: UntrackLinkStatePatch
+    linkRepository: LinkRepository,
+    helpStatePatch: HelpStatePatchMock,
+    listStatePatch: ListStatePatchMock,
+    startStatePatch: StartStatePatchMock,
+    trackStatePatch: TrackStatePatchMock,
+    untrackStatePatch: UntrackStatePatchMock,
+    trackLinkStatePatch: TrackLinkStatePatchMock,
+    untrackLinkStatePatch: UntrackLinkStatePatchMock,
+    scope: TestScope
 ) : BotInteractor {
     private val stateLessHandlers by lazy {
         listOf(
@@ -31,13 +34,15 @@ class BotInteractorMock(
 
     private val stateFullHandlers by lazy {
         mapOf(
-            "link" to (MockResultCommand() to trackLinkStatePatch),
-            "unlink" to (MockResultCommand() to untrackLinkStatePatch)
+            UserState.TrackSentState::class.simpleName!! to
+                    (TrackLinkCommand(linkRepository, scope) to trackLinkStatePatch),
+            UserState.UntrackSentState::class.simpleName!! to
+                    (UntrackLinkCommand(linkRepository, scope) to untrackLinkStatePatch)
         )
     }
 
     private val unknownCommand by lazy {
-        MockCommand(null)
+        UnknownCommand()
     }
 
     override suspend fun handleCommandAndPatchUserState(
@@ -72,15 +77,14 @@ class BotInteractorMock(
         userLinks: List<String>,
         userState: UserState
     ) {
-        when (userState) {
-            is UserState.NoneState ->
-                unknownCommand.onCommand(bot, message, userLinks)
+        when (val handler = stateFullHandlers[userState::class.simpleName]) {
+            null -> unknownCommand.onCommand(bot, message, userLinks)
 
             else -> {
-                val (cmd, patcher) = stateFullHandlers[userState::class.simpleName]!!
-                cmd.onCommand(bot, message, userLinks)?.let {
-                    patcher.patchUserState(message.botUser)
-                }
+                val (statusCommand, patcher) = handler
+                statusCommand
+                    .onCommand(bot, message, userLinks)
+                    ?.let { patcher.patchUserState(message.botUser) }
             }
         }
     }

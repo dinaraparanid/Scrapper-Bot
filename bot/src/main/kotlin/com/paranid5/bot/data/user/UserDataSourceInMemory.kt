@@ -25,8 +25,10 @@ class UserDataSourceInMemory : UserDataSource {
         _userStatesFlow
     }
 
-    override suspend fun patchUser(user: User): Unit =
-        patchUserImpl(user, UserState::NoneState)
+    override suspend fun patchUser(user: User) {
+        if (user !in _usersFlow.value)
+            patchUserImpl(user, UserState::NoneState)
+    }
 
     override suspend fun patchUserState(userState: UserState): Unit =
         patchUserImpl(userState.user) { userState }
