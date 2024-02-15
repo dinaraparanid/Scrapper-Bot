@@ -1,13 +1,14 @@
 package com.paranid5.bot
 
-import com.paranid5.bot.data.link.repository.LinkRepository
-import com.paranid5.bot.data.link.response.LinkResponse
-import com.paranid5.bot.data.link.sources.github.GitHubDataSourceMock
-import com.paranid5.bot.data.link.sources.stack_overflow.StackOverflowDataSourceMock
-import com.paranid5.bot.data.user.UserDataSourceMock
-import com.paranid5.bot.domain.bot.user_state_patch.*
-import com.paranid5.bot.domain.user.User
-import com.paranid5.bot.domain.user.UserState
+import com.paranid5.bot.user_state_patch.*
+import com.paranid5.core.entities.link.LinkResponse
+import com.paranid5.core.entities.user.User
+import com.paranid5.core.entities.user.UserState
+import com.paranid5.data.link.repository.LinkRepository
+import com.paranid5.data.link.sources.github.GitHubDataSourceInMemory
+import com.paranid5.data.link.sources.stack_overflow.StackOverflowDataSourceInMemory
+import com.paranid5.data.user.UserDataSourceMock
+import com.paranid5.utils.matches
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
@@ -62,8 +63,8 @@ class ScrapperBotTest {
     @Test
     fun scrapperTest() = runTest {
         val linkRep = LinkRepositoryMock(
-            GitHubDataSourceMock(),
-            StackOverflowDataSourceMock(),
+            GitHubDataSourceInMemory(),
+            StackOverflowDataSourceInMemory(),
             this
         )
 

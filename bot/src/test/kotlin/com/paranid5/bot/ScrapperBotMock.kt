@@ -1,14 +1,13 @@
 package com.paranid5.bot
 
-import com.paranid5.bot.data.link.repository.LinkRepository
-import com.paranid5.bot.data.link.response.LinkResponse
-import com.paranid5.bot.data.user.UserDataSource
-import com.paranid5.bot.domain.bot.ScrapperBot
-import com.paranid5.bot.domain.bot.interactor.BotInteractor
-import com.paranid5.bot.domain.user.User
-import com.paranid5.bot.domain.user.UserState
-import com.paranid5.bot.domain.user.botUser
-import com.paranid5.bot.domain.utils.textOrEmpty
+import com.paranid5.bot.interactor.BotInteractor
+import com.paranid5.com.paranid5.utils.bot.botUser
+import com.paranid5.core.bot.ScrapperBot
+import com.paranid5.core.entities.link.LinkResponse
+import com.paranid5.core.entities.user.User
+import com.paranid5.core.entities.user.UserState
+import com.paranid5.data.link.repository.LinkRepository
+import com.paranid5.data.user.UserDataSource
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Chat
 import com.pengrad.telegrambot.model.Message

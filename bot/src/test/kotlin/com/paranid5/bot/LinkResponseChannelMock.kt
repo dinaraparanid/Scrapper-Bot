@@ -1,11 +1,12 @@
 package com.paranid5.bot
 
-import com.paranid5.bot.data.link.response.LinkResponse
-import com.paranid5.bot.data.link.response.LinkResponseChannel
-import com.paranid5.bot.domain.links.LinkType
+import com.paranid5.core.bot.ScrapperBot
+import com.paranid5.core.entities.link.LinkResponse
+import com.paranid5.core.entities.link.LinkType
+import com.paranid5.data.link.response.LinkResponseChannel
 
 class LinkResponseChannelMock(
-    private val scrapperBot: ScrapperBotMock
+    private val scrapperBot: ScrapperBot
 ) : LinkResponseChannel {
     override suspend fun respondLinkStorage(
         userId: Long,

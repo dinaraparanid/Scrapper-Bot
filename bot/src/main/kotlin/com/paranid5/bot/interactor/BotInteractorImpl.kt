@@ -1,46 +1,43 @@
-package com.paranid5.bot
+package com.paranid5.bot.interactor
 
-import com.paranid5.bot.commands.MockCommand
-import com.paranid5.bot.commands.TrackLinkCommand
-import com.paranid5.bot.commands.UnknownCommand
-import com.paranid5.bot.commands.UntrackLinkCommand
-import com.paranid5.bot.interactor.BotInteractor
+import com.paranid5.bot.commands.*
 import com.paranid5.bot.user_state_patch.*
+import com.paranid5.bot.user_state_patch.HelpStatePatch
 import com.paranid5.com.paranid5.utils.bot.botUser
 import com.paranid5.com.paranid5.utils.bot.textOrEmpty
 import com.paranid5.core.entities.user.UserState
 import com.paranid5.data.link.repository.LinkRepository
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
-import kotlinx.coroutines.test.TestScope
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.stereotype.Component
 
-class BotInteractorMock(
+@Component
+class BotInteractorImpl(
+    @Qualifier("linkRepositoryInMemory")
     linkRepository: LinkRepository,
-    helpStatePatch: HelpStatePatchMock,
-    listStatePatch: ListStatePatchMock,
-    startStatePatch: StartStatePatchMock,
-    trackStatePatch: TrackStatePatchMock,
-    untrackStatePatch: UntrackStatePatchMock,
-    trackLinkStatePatch: TrackLinkStatePatchMock,
-    untrackLinkStatePatch: UntrackLinkStatePatchMock,
-    scope: TestScope
+    helpStatePatch: HelpStatePatch,
+    listStatePatch: ListStatePatch,
+    startStatePatch: StartStatePatch,
+    trackLinkStatePatch: TrackLinkStatePatch,
+    trackStatePatch: TrackStatePatch,
+    untrackStatePatch: UntrackStatePatch,
+    untrackLinkStatePatch: UntrackLinkStatePatch
 ) : BotInteractor {
     private val stateLessHandlers by lazy {
         listOf(
-            MockCommand("/help") to helpStatePatch,
-            MockCommand("/list") to listStatePatch,
-            MockCommand("/start") to startStatePatch,
-            MockCommand("/track") to trackStatePatch,
-            MockCommand("/untrack") to untrackStatePatch,
+            HelpCommand() to helpStatePatch,
+            ListCommand() to listStatePatch,
+            StartCommand() to startStatePatch,
+            TrackCommand() to trackStatePatch,
+            UntrackCommand() to untrackStatePatch,
         )
     }
 
     private val stateFullHandlers by lazy {
         mapOf(
-            UserState.TrackSentState::class.simpleName!! to
-                    (TrackLinkCommand(linkRepository, scope) to trackLinkStatePatch),
-            UserState.UntrackSentState::class.simpleName!! to
-                    (UntrackLinkCommand(linkRepository, scope) to untrackLinkStatePatch)
+            UserState.TrackSentState::class.simpleName!! to (TrackLinkCommand(linkRepository) to trackLinkStatePatch),
+            UserState.UntrackSentState::class.simpleName!! to (UntrackLinkCommand(linkRepository) to untrackLinkStatePatch)
         )
     }
 
@@ -88,6 +85,7 @@ class BotInteractorMock(
                 statusCommand
                     .onCommand(bot, message, userLinks)
                     ?.let { patcher.patchUserState(message.botUser) }
+                    ?: statusCommand.onFailure(bot, message)
             }
         }
     }

@@ -18,6 +18,8 @@ extra["springCloudVersion"] = "2023.0.0"
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":utils"))
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
@@ -26,10 +28,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation(project(":utils"))
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0-RC2")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.mockito:mockito-core:5.8.0")
 }
 
 dependencyManagement {
