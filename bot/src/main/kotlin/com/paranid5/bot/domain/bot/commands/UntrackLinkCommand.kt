@@ -1,10 +1,10 @@
 package com.paranid5.bot.domain.bot.commands
 
-import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.domain.bot.messages.unsupportedLinkMessage
-import com.paranid5.bot.domain.links.parseLink
-import com.paranid5.bot.domain.utils.chatId
-import com.paranid5.bot.domain.utils.textOrEmpty
+import com.paranid5.com.paranid5.utils.bot.chatId
+import com.paranid5.com.paranid5.utils.bot.textOrEmpty
+import com.paranid5.core.entities.link.parseLink
+import com.paranid5.data.link.repository.LinkRepository
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 import kotlinx.coroutines.*

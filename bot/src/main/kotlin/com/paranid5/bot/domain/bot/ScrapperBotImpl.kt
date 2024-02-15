@@ -1,13 +1,14 @@
 package com.paranid5.bot.domain.bot
 
 import com.paranid5.bot.configuration.AppConfig
-import com.paranid5.bot.data.link.repository.LinkRepository
-import com.paranid5.bot.data.link.response.LinkResponse
-import com.paranid5.bot.data.user.UserDataSource
-import com.paranid5.bot.domain.bot.messages.*
 import com.paranid5.bot.domain.bot.interactor.BotInteractor
-import com.paranid5.bot.domain.user.UserState
-import com.paranid5.bot.domain.user.botUser
+import com.paranid5.bot.domain.bot.messages.*
+import com.paranid5.com.paranid5.utils.bot.botUser
+import com.paranid5.core.bot.ScrapperBot
+import com.paranid5.core.entities.link.LinkResponse
+import com.paranid5.core.entities.user.UserState
+import com.paranid5.data.link.repository.LinkRepository
+import com.paranid5.data.user.UserDataSource
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Message
@@ -23,11 +24,10 @@ import org.springframework.stereotype.Component
 @Component
 class ScrapperBotImpl(
     config: AppConfig,
-    @Qualifier("user_src_memory")
+    @Qualifier("userDataSourceInMemory")
     private val userDataSource: UserDataSource,
-    @Qualifier("link_rep_memory")
+    @Qualifier("linkRepositoryInMemory")
     private val linkRepository: LinkRepository,
-    @Qualifier("interactor_impl")
     private val botInteractor: BotInteractor
 ) : ScrapperBot,
     CoroutineScope by CoroutineScope(Dispatchers.IO) {

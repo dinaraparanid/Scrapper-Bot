@@ -1,19 +1,19 @@
 package com.paranid5.bot.domain.bot.interactor
 
-import com.paranid5.bot.data.link.repository.LinkRepository
 import com.paranid5.bot.domain.bot.commands.*
 import com.paranid5.bot.domain.bot.user_state_patch.*
-import com.paranid5.bot.domain.user.UserState
-import com.paranid5.bot.domain.user.botUser
-import com.paranid5.bot.domain.utils.textOrEmpty
+import com.paranid5.com.paranid5.utils.bot.botUser
+import com.paranid5.com.paranid5.utils.bot.textOrEmpty
+import com.paranid5.core.entities.user.UserState
+import com.paranid5.data.link.repository.LinkRepository
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
-@Component("interactor_impl")
+@Component
 class BotInteractorImpl(
-    @Qualifier("link_rep_memory")
+    @Qualifier("linkRepositoryInMemory")
     linkRepository: LinkRepository,
     helpStatePatch: HelpStatePatch,
     listStatePatch: ListStatePatch,

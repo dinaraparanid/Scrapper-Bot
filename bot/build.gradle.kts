@@ -27,6 +27,10 @@ repositories {
 extra["springCloudVersion"] = "2023.0.0"
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":data"))
+    implementation(project(":utils"))
+
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
@@ -35,7 +39,6 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.github.pengrad:java-telegram-bot-api:7.0.1")
-    implementation("com.paywholesail:assisted-inject:0.9.4")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
@@ -66,3 +69,9 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+kotlin {
+    jvmToolchain(21)
+}
+
+tasks.register("prepareKotlinBuildScriptModel") {}

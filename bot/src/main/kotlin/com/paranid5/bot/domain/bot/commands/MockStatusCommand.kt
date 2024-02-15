@@ -1,6 +1,6 @@
 package com.paranid5.bot.domain.bot.commands
 
-import com.paranid5.bot.domain.links.parseLink
+import com.paranid5.core.entities.link.parseLink
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 

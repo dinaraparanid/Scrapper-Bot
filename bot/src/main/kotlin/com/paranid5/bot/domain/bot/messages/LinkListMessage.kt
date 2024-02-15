@@ -1,6 +1,6 @@
 package com.paranid5.bot.domain.bot.messages
 
-import com.paranid5.bot.domain.utils.chatId
+import com.paranid5.com.paranid5.utils.bot.chatId
 import com.pengrad.telegrambot.model.LinkPreviewOptions
 import com.pengrad.telegrambot.model.Message
 import com.pengrad.telegrambot.request.SendMessage
