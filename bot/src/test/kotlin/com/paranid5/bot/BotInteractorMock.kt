@@ -5,11 +5,11 @@ import com.paranid5.bot.commands.TrackLinkCommand
 import com.paranid5.bot.commands.UnknownCommand
 import com.paranid5.bot.commands.UntrackLinkCommand
 import com.paranid5.bot.interactor.BotInteractor
-import com.paranid5.bot.user_state_patch.*
 import com.paranid5.com.paranid5.utils.bot.botUser
 import com.paranid5.com.paranid5.utils.bot.textOrEmpty
 import com.paranid5.core.entities.user.UserState
 import com.paranid5.data.link.repository.LinkRepository
+import com.paranid5.data.user.user_state_patch.*
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Message
 import kotlinx.coroutines.test.TestScope
@@ -45,7 +45,7 @@ class BotInteractorMock(
     }
 
     private val unknownCommand by lazy {
-        UnknownCommand()
+        UnknownCommand
     }
 
     override suspend fun handleCommandAndPatchUserState(
@@ -60,7 +60,7 @@ class BotInteractorMock(
 
     private fun findCommand(text: String): String? =
         stateLessHandlers
-            .find { (cmd, _) -> cmd.text == text }
+            .find { (cmd, _) -> cmd matches text }
             ?.let { text }
 
     private suspend inline fun handleCommandAndPatchUserStateImpl(
@@ -93,12 +93,12 @@ class BotInteractorMock(
     }
 
     private suspend inline fun handleStateLessCommands(
-        command: String?,
+        command: String,
         bot: TelegramBot,
         message: Message,
         userLinks: List<String>
     ) {
-        when (val handler = stateLessHandlers.find { (cmd, _) -> cmd.text == command }) {
+        when (val handler = stateLessHandlers.find { (cmd, _) -> cmd matches command }) {
             null -> unknownCommand.onCommand(bot, message, userLinks)
 
             else -> {

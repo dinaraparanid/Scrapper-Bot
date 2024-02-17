@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-data class UnknownCommand(override val text: String? = null) : BotCommand<SendResponse> {
+data object UnknownCommand : BotCommand<SendResponse> {
     override suspend fun onCommand(
         bot: TelegramBot,
         message: Message,

@@ -8,6 +8,7 @@ import com.paranid5.data.link.repository.LinkRepository
 import com.paranid5.data.link.sources.github.GitHubDataSourceInMemory
 import com.paranid5.data.link.sources.stack_overflow.StackOverflowDataSourceInMemory
 import com.paranid5.data.user.UserDataSourceMock
+import com.paranid5.data.user.user_state_patch.*
 import com.paranid5.utils.matches
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.toList

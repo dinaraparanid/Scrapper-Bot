@@ -12,7 +12,6 @@ import kotlinx.coroutines.*
 data class TrackLinkCommand(
     private val linkRepository: LinkRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
-    override val text: String? = null
 ) : BotStatusCommand<Unit?> {
     override suspend fun onCommand(
         bot: TelegramBot,

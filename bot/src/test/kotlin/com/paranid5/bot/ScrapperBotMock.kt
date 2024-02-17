@@ -63,34 +63,37 @@ class ScrapperBotMock(
         user: User,
         message: String,
         messageId: Int = Random.nextInt()
-    ) = messagesFlow.emit(
-        object : Message() {
-            @Serial
-            private val serialVersionUID: Long = -5235462941514739848L
-
-            override fun messageId(): Int = messageId
-
-            override fun text(): String = message
-
-            override fun from(): TgUser = object : TgUser(user.id) {
+    ) {
+        fun message() =
+            object : Message() {
                 @Serial
-                private val serialVersionUID: Long = 2544479605889672743L
+                private val serialVersionUID: Long = -5235462941514739848L
 
-                override fun firstName(): String =
-                    user.firstName
+                override fun messageId(): Int = messageId
 
-                override fun lastName(): String =
-                    user.secondName
+                override fun text(): String = message
+
+                override fun from(): TgUser = object : TgUser(user.id) {
+                    @Serial
+                    private val serialVersionUID: Long = 2544479605889672743L
+
+                    override fun firstName(): String =
+                        user.firstName
+
+                    override fun lastName(): String =
+                        user.secondName
+                }
+
+                override fun chat(): Chat = object : Chat() {
+                    @Serial
+                    private val serialVersionUID: Long = -4449400557775734231L
+
+                    override fun id(): Long = user.chatId
+                }
             }
 
-            override fun chat(): Chat = object : Chat() {
-                @Serial
-                private val serialVersionUID: Long = -4449400557775734231L
-
-                override fun id(): Long = user.chatId
-            }
-        }
-    )
+        messagesFlow.emit(message())
+    }
 
     private suspend fun launchBotEventLoop(bot: TelegramBot): Unit =
         combine(
